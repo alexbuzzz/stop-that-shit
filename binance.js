@@ -46,6 +46,7 @@ const closePos = async () => {
   positions = {}
 }
 
+// Get orders
 const getOrd = async () => {
   const ordersObj = await binance.futuresOpenOrders()
   let msg = ''
@@ -59,6 +60,7 @@ const getOrd = async () => {
   return { orders, msg }
 }
 
+// Cancel orders
 const cancelOrd = async () => {
   await orders.forEach(async (element) => {
     await binance.futuresCancelAll(element)
@@ -66,4 +68,29 @@ const cancelOrd = async () => {
   orders = []
 }
 
-module.exports = { getPos, closePos, getOrd, cancelOrd }
+// Set leverage
+const setLeverage = async (lever) => {
+  const futurePairs = await binance.futuresMarkPrice()
+  const allTickers = []
+
+  await futurePairs.forEach((element) => {
+    allTickers.push(element.symbol)
+  })
+
+  if (lever == 'max') {
+    const brackets = await binance.futuresLeverageBracket()
+
+    brackets.forEach(async (element) => {
+      await binance.futuresLeverage(
+        element.symbol,
+        element.brackets[0].initialLeverage
+      )
+    })
+  } else {
+    allTickers.forEach(async (element) => {
+      await binance.futuresLeverage(element, lever)
+    })
+  }
+}
+
+module.exports = { getPos, closePos, getOrd, cancelOrd, setLeverage }

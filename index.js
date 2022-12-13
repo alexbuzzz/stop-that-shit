@@ -4,9 +4,17 @@ const {
   removeOrders,
   closePositions,
   backKeyboard,
+  chooseLeverage,
 } = require('./keyboards')
 
-const { getPos, closePos, getOrd, cancelOrd } = require('./binance')
+const {
+  getPos,
+  closePos,
+  getOrd,
+  cancelOrd,
+  setLeverage,
+} = require('./binance')
+
 const { Telegraf } = require('telegraf')
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
@@ -21,7 +29,7 @@ try {
       await ctx.replyWithAnimation({
         source: 'simpson-homer-simpson.mp4',
       })
-      ctx.reply('Press button to check information:', checkOrdersAndPositions)
+      ctx.reply('Press button to do something:', checkOrdersAndPositions)
     }
   })
 } catch (error) {
@@ -80,11 +88,93 @@ try {
   console.log('close_positions error' + error)
 }
 
+// CHOOSE LEVERAGE
+try {
+  bot.action('leverage', async (ctx) => {
+    ctx.editMessageText(
+      'Select leverage value to set in all futures:',
+      chooseLeverage
+    )
+  })
+} catch (error) {
+  console.log('leverage error' + error)
+}
+
+// SET 1
+try {
+  bot.action('one', async (ctx) => {
+    await setLeverage(1)
+    ctx.editMessageText('✅ 1X is set successfully', backKeyboard)
+  })
+} catch (error) {
+  console.log('one error' + error)
+}
+
+// SET 2
+try {
+  bot.action('two', async (ctx) => {
+    await setLeverage(2)
+    ctx.editMessageText('✅ 2X is set successfully', backKeyboard)
+  })
+} catch (error) {
+  console.log('two error' + error)
+}
+
+// SET 5
+try {
+  bot.action('five', async (ctx) => {
+    await setLeverage(5)
+    ctx.editMessageText('✅ 5X is set successfully', backKeyboard)
+  })
+} catch (error) {
+  console.log('five error' + error)
+}
+
+// SET 8
+try {
+  bot.action('eight', async (ctx) => {
+    await setLeverage(8)
+    ctx.editMessageText('✅ 8X is set successfully', backKeyboard)
+  })
+} catch (error) {
+  console.log('eight error' + error)
+}
+
+// SET 10
+try {
+  bot.action('ten', async (ctx) => {
+    await setLeverage(10)
+    ctx.editMessageText('✅ 10X is set successfully', backKeyboard)
+  })
+} catch (error) {
+  console.log('ten error' + error)
+}
+
+// SET 20
+try {
+  bot.action('twenty', async (ctx) => {
+    await setLeverage(20)
+    ctx.editMessageText('✅ 20X is set successfully', backKeyboard)
+  })
+} catch (error) {
+  console.log('twenty error' + error)
+}
+
+// SET MAX
+try {
+  bot.action('max', async (ctx) => {
+    await setLeverage('max')
+    ctx.editMessageText('✅ MAX LEVERAGE is set successfully !!!', backKeyboard)
+  })
+} catch (error) {
+  console.log('max error' + error)
+}
+
 // BACK
 try {
   bot.action('back', (ctx) => {
     ctx.editMessageText(
-      'Press button to check information:',
+      'Press button to do something:',
       checkOrdersAndPositions
     )
   })
