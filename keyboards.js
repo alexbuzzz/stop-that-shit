@@ -1,14 +1,14 @@
 const { Markup } = require('telegraf')
 
 // Status button
-const checkOrdersAndPositions = Markup.inlineKeyboard([
+const startKeyboard = Markup.inlineKeyboard([
   [
     Markup.button.callback('🔄 ORDERS', 'check_orders'),
     Markup.button.callback('🔄 POSITIONS', 'check_positions'),
   ],
   [
     Markup.button.callback('⚙️ LEVERAGE', 'leverage'),
-    Markup.button.callback('💰 WALLET', 'wallet'),
+    Markup.button.callback('💰 BALANCES ', 'balances'),
   ],
 ])
 
@@ -48,7 +48,7 @@ const backKeyboard = Markup.inlineKeyboard([
 ])
 
 module.exports = {
-  checkOrdersAndPositions,
+  startKeyboard,
   removeOrders,
   closePositions,
   backKeyboard,

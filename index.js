@@ -1,6 +1,6 @@
 require('dotenv').config()
 const {
-  checkOrdersAndPositions,
+  startKeyboard,
   removeOrders,
   closePositions,
   backKeyboard,
@@ -13,6 +13,7 @@ const {
   getOrd,
   cancelOrd,
   setLeverage,
+  getBalances,
 } = require('./binance')
 
 const { Telegraf } = require('telegraf')
@@ -29,7 +30,7 @@ try {
       await ctx.replyWithAnimation({
         source: 'simpson-homer-simpson.mp4',
       })
-      ctx.reply('Press button to do something:', checkOrdersAndPositions)
+      ctx.reply('Press button to do something:', startKeyboard)
     }
   })
 } catch (error) {
@@ -104,7 +105,7 @@ try {
 try {
   bot.action('one', async (ctx) => {
     await setLeverage(1)
-    ctx.editMessageText('✅ 1X is set successfully', backKeyboard)
+    ctx.editMessageText('✅ 1X successfully set', backKeyboard)
   })
 } catch (error) {
   console.log('one error' + error)
@@ -114,7 +115,7 @@ try {
 try {
   bot.action('two', async (ctx) => {
     await setLeverage(2)
-    ctx.editMessageText('✅ 2X is set successfully', backKeyboard)
+    ctx.editMessageText('✅ 2X successfully set', backKeyboard)
   })
 } catch (error) {
   console.log('two error' + error)
@@ -124,7 +125,7 @@ try {
 try {
   bot.action('five', async (ctx) => {
     await setLeverage(5)
-    ctx.editMessageText('✅ 5X is set successfully', backKeyboard)
+    ctx.editMessageText('✅ 5X successfully set', backKeyboard)
   })
 } catch (error) {
   console.log('five error' + error)
@@ -134,7 +135,7 @@ try {
 try {
   bot.action('eight', async (ctx) => {
     await setLeverage(8)
-    ctx.editMessageText('✅ 8X is set successfully', backKeyboard)
+    ctx.editMessageText('✅ 8X successfully set', backKeyboard)
   })
 } catch (error) {
   console.log('eight error' + error)
@@ -144,7 +145,7 @@ try {
 try {
   bot.action('ten', async (ctx) => {
     await setLeverage(10)
-    ctx.editMessageText('✅ 10X is set successfully', backKeyboard)
+    ctx.editMessageText('✅ 10X successfully set', backKeyboard)
   })
 } catch (error) {
   console.log('ten error' + error)
@@ -154,7 +155,7 @@ try {
 try {
   bot.action('twenty', async (ctx) => {
     await setLeverage(20)
-    ctx.editMessageText('✅ 20X is set successfully', backKeyboard)
+    ctx.editMessageText('✅ 20X successfully set', backKeyboard)
   })
 } catch (error) {
   console.log('twenty error' + error)
@@ -164,7 +165,17 @@ try {
 try {
   bot.action('max', async (ctx) => {
     await setLeverage('max')
-    ctx.editMessageText('✅ MAX LEVERAGE is set successfully !!!', backKeyboard)
+    ctx.editMessageText('✅ MAX LEVERAGE successfully set!!!', backKeyboard)
+  })
+} catch (error) {
+  console.log('max error' + error)
+}
+
+// BALANCES
+try {
+  bot.action('balances', async (ctx) => {
+    const balances = await getBalances()
+    ctx.editMessageText(balances, backKeyboard)
   })
 } catch (error) {
   console.log('max error' + error)
@@ -173,10 +184,7 @@ try {
 // BACK
 try {
   bot.action('back', (ctx) => {
-    ctx.editMessageText(
-      'Press button to do something:',
-      checkOrdersAndPositions
-    )
+    ctx.editMessageText('Press button to do something:', startKeyboard)
   })
 } catch (error) {
   console.log('back error' + error)

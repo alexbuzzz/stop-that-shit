@@ -93,4 +93,36 @@ const setLeverage = async (lever) => {
   }
 }
 
-module.exports = { getPos, closePos, getOrd, cancelOrd, setLeverage }
+// Get balances
+const getBalances = async () => {
+  let msg = 'FUT:\n'
+
+  const fut = await binance.futuresBalance()
+
+  await fut.forEach((element) => {
+    if (element.balance > 0) {
+      msg += `${element.asset} ${Number(element.balance).toFixed(2)}$\n`
+    }
+  })
+
+  const spot = await binance.balance()
+
+  msg += '\nSPOT:\n'
+
+  Object.keys(spot).forEach((key) => {
+    if (spot[key].available > 0) {
+      msg += `${key} ${Number(spot[key].available).toFixed(2)}$\n`
+    }
+  })
+
+  return msg
+}
+
+module.exports = {
+  getPos,
+  closePos,
+  getOrd,
+  cancelOrd,
+  setLeverage,
+  getBalances,
+}
