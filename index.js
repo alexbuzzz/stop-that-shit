@@ -14,6 +14,7 @@ const {
   cancelOrd,
   setLeverage,
   getBalances,
+  getFundingRate
 } = require('./binance')
 
 const { Telegraf } = require('telegraf')
@@ -26,9 +27,8 @@ let delayTime
 try {
   bot.command('start', async (ctx) => {
     if (ctx.message.chat.id == process.env.USER_ID) {
-      await ctx.reply('STOP THAT SHIT!!!')
       await ctx.replyWithAnimation({
-        source: 'simpson-homer-simpson.mp4',
+        source: 'gif.gif',
       })
       ctx.reply('Press button to do something:', startKeyboard)
     }
@@ -179,6 +179,16 @@ try {
   })
 } catch (error) {
   console.log('max error' + error)
+}
+
+// FUNDINGS
+try {
+  bot.action('fundings', async (ctx) => {
+    const fundings = await getFundingRate()
+    ctx.editMessageText(fundings, backKeyboard)
+  })
+} catch (error) {
+  console.log('back error' + error)
 }
 
 // BACK

@@ -1,6 +1,6 @@
 const { Markup } = require('telegraf')
 
-// Status button
+// Start keyboard
 const startKeyboard = Markup.inlineKeyboard([
   [
     Markup.button.callback('🔄 ORDERS', 'check_orders'),
@@ -9,6 +9,9 @@ const startKeyboard = Markup.inlineKeyboard([
   [
     Markup.button.callback('⚙️ LEVERAGE', 'leverage'),
     Markup.button.callback('💰 BALANCES ', 'balances'),
+  ],
+  [
+    Markup.button.callback('🚁 FUNDINGS', 'fundings')
   ],
 ])
 

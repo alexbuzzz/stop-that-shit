@@ -118,6 +118,29 @@ const getBalances = async () => {
   return msg
 }
 
+// Get fundings
+const getFundingRate = async () => {
+  let msg = ''
+  const res = await binance.futuresMarkPrice()
+  const currentTime = res[1].time
+  const nextTime = res[1].nextFundingTime
+  const minsLeft = Math.round((nextTime - currentTime) / 1000 / 60)
+  let h = Math.floor(minsLeft / 60)
+  let m = minsLeft % 60
+
+  msg += `Time to next funding: ${(h = h < 10 ? '0' + h : h)}:${(m =
+    m < 10 ? '0' + m : m)}\n\n`
+
+  await res.forEach((element) => {
+    const rate = (element.lastFundingRate * 100).toFixed(2)
+
+    if (Math.abs(rate) > 1) {
+      msg += `${element.symbol} ${rate}\n`
+    }
+  })
+  return msg
+}
+
 module.exports = {
   getPos,
   closePos,
@@ -125,4 +148,5 @@ module.exports = {
   cancelOrd,
   setLeverage,
   getBalances,
+  getFundingRate,
 }
