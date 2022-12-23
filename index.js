@@ -1,3 +1,5 @@
+const cron = require('node-cron')
+
 require('dotenv').config()
 const {
   startKeyboard,
@@ -14,8 +16,10 @@ const {
   cancelOrd,
   setLeverage,
   getBalances,
-  getFundingRate
+  getFundingRate,
 } = require('./binance')
+
+const { helpText } = require('./textTemplates')
 
 const { Telegraf } = require('telegraf')
 
@@ -24,18 +28,24 @@ const bot = new Telegraf(process.env.BOT_TOKEN)
 let delayTime
 
 // START
-try {
-  bot.command('start', async (ctx) => {
-    if (ctx.message.chat.id == process.env.USER_ID) {
-      await ctx.replyWithAnimation({
-        source: 'gif.gif',
-      })
+
+bot.command('start', async (ctx) => {
+  if (ctx.message.chat.id == process.env.USER_ID) {
+    try {
+      await ctx.replyWithPhoto({ source: './lazyscalp1000x1000.png' })
       ctx.reply('Press button to do something:', startKeyboard)
+    } catch (error) {
+      console.log('start error' + error)
     }
-  })
-} catch (error) {
-  console.log('start error' + error)
-}
+
+    // cron.schedule('* * * * *', async () => {
+    //   const msg = await ctx.reply(
+    //     'Hi there! 👋 \nGo chill and wait for a signal from me! 😎'
+    //   )
+    //   console.log(msg.message_id)
+    // })
+  }
+})
 
 // CHECK ORDERS
 try {
@@ -43,10 +53,12 @@ try {
     clearTimeout(delayTime)
     const orders = await getOrd()
 
-    if (orders.orders.length > 0) {
-      ctx.editMessageText(`Orders:\n${orders.msg}`, removeOrders)
-    } else {
+    if (orders.status === 'empty') {
       ctx.editMessageText('No open ORDERS yet 👌', backKeyboard)
+    } else if (orders.status === 'error') {
+      ctx.editMessageText(orders.msg, backKeyboard)
+    } else {
+      ctx.editMessageText(`Orders:\n${orders.msg}`, removeOrders)
     }
   })
 } catch (error) {
@@ -59,10 +71,12 @@ try {
     clearTimeout(delayTime)
     const positions = await getPos()
 
-    if (Object.keys(positions.positions).length > 0) {
-      ctx.editMessageText(`Positions:\n${positions.msg}`, closePositions)
-    } else {
+    if (positions.status === 'empty') {
       ctx.editMessageText('No open POSITIONS yet 👌', backKeyboard)
+    } else if (positions.status === 'error') {
+      ctx.editMessageText(positions.msg, backKeyboard)
+    } else {
+      ctx.editMessageText(`Positions:\n${positions.msg}`, closePositions)
     }
   })
 } catch (error) {
@@ -72,8 +86,8 @@ try {
 // CANCEL ORDERS
 try {
   bot.action('remove_orders', async (ctx) => {
-    await cancelOrd()
-    ctx.editMessageText('✅ All orders were canceled', backKeyboard)
+    const cancelStatus = await cancelOrd()
+    ctx.editMessageText(cancelStatus, backKeyboard)
   })
 } catch (error) {
   console.log('remove_orders error') + error
@@ -82,8 +96,8 @@ try {
 // CLOSE POSITIONS
 try {
   bot.action('close_positions', async (ctx) => {
-    await closePos()
-    ctx.editMessageText('✅ All positions are closed', backKeyboard)
+    const closeStatus = await closePos()
+    ctx.editMessageText(closeStatus, backKeyboard)
   })
 } catch (error) {
   console.log('close_positions error' + error)
@@ -104,8 +118,8 @@ try {
 // SET 1
 try {
   bot.action('one', async (ctx) => {
-    await setLeverage(1)
-    ctx.editMessageText('✅ 1X successfully set', backKeyboard)
+    const res = await setLeverage(1)
+    ctx.editMessageText(res, backKeyboard)
   })
 } catch (error) {
   console.log('one error' + error)
@@ -114,8 +128,8 @@ try {
 // SET 2
 try {
   bot.action('two', async (ctx) => {
-    await setLeverage(2)
-    ctx.editMessageText('✅ 2X successfully set', backKeyboard)
+    const res = await setLeverage(2)
+    ctx.editMessageText(res, backKeyboard)
   })
 } catch (error) {
   console.log('two error' + error)
@@ -124,8 +138,8 @@ try {
 // SET 5
 try {
   bot.action('five', async (ctx) => {
-    await setLeverage(5)
-    ctx.editMessageText('✅ 5X successfully set', backKeyboard)
+    const res = await setLeverage(5)
+    ctx.editMessageText(res, backKeyboard)
   })
 } catch (error) {
   console.log('five error' + error)
@@ -134,8 +148,8 @@ try {
 // SET 8
 try {
   bot.action('eight', async (ctx) => {
-    await setLeverage(8)
-    ctx.editMessageText('✅ 8X successfully set', backKeyboard)
+    const res = await setLeverage(8)
+    ctx.editMessageText(res, backKeyboard)
   })
 } catch (error) {
   console.log('eight error' + error)
@@ -144,8 +158,8 @@ try {
 // SET 10
 try {
   bot.action('ten', async (ctx) => {
-    await setLeverage(10)
-    ctx.editMessageText('✅ 10X successfully set', backKeyboard)
+    const res = await setLeverage(10)
+    ctx.editMessageText(res, backKeyboard)
   })
 } catch (error) {
   console.log('ten error' + error)
@@ -154,8 +168,8 @@ try {
 // SET 20
 try {
   bot.action('twenty', async (ctx) => {
-    await setLeverage(20)
-    ctx.editMessageText('✅ 20X successfully set', backKeyboard)
+    const res = await setLeverage(20)
+    ctx.editMessageText(res, backKeyboard)
   })
 } catch (error) {
   console.log('twenty error' + error)
@@ -164,8 +178,8 @@ try {
 // SET MAX
 try {
   bot.action('max', async (ctx) => {
-    await setLeverage('max')
-    ctx.editMessageText('✅ MAX LEVERAGE successfully set!!!', backKeyboard)
+    const res = await setLeverage('max')
+    ctx.editMessageText(res, backKeyboard)
   })
 } catch (error) {
   console.log('max error' + error)
@@ -186,6 +200,15 @@ try {
   bot.action('fundings', async (ctx) => {
     const fundings = await getFundingRate()
     ctx.editMessageText(fundings, backKeyboard)
+  })
+} catch (error) {
+  console.log('back error' + error)
+}
+
+// HELP
+try {
+  bot.action('help', async (ctx) => {
+    ctx.editMessageText(helpText, backKeyboard)
   })
 } catch (error) {
   console.log('back error' + error)
