@@ -1,4 +1,5 @@
 require('dotenv').config()
+
 const Binance = require('node-binance-api')
 
 const binance = new Binance().options({
@@ -188,6 +189,8 @@ const getBalances = async () => {
 // Get fundings
 const getFundingRate = async () => {
   let msg = ''
+  let tickers = ''
+  let counter = 0
   const res = await binance.futuresMarkPrice()
   const currentTime = res[1].time
   const nextTime = res[1].nextFundingTime
@@ -198,8 +201,6 @@ const getFundingRate = async () => {
   msg += `⏱ NEXT FUNDING IN: ${(h = h < 10 ? '0' + h : h)}:${(m =
     m < 10 ? '0' + m : m)}\n\n`
 
-  let tickers = ''
-  let counter = 0
   await res.forEach((element) => {
     const rate = (element.lastFundingRate * 100).toFixed(2)
 
@@ -208,13 +209,14 @@ const getFundingRate = async () => {
       counter++
     }
   })
+
   if (counter > 0) {
     msg += tickers
   } else {
     msg += 'Nothing to trade yet 😢'
   }
 
-  return msg
+  return { msg, counter }
 }
 
 module.exports = {

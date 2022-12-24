@@ -58,6 +58,15 @@ const chooseLeverage = {
   ]),
 }
 
+// Funding
+const fundingMenu = {
+  parse_mode: 'HTML',
+  ...Markup.inlineKeyboard([
+    Markup.button.callback('⬅️ BACK', 'back'),
+    Markup.button.callback('ALERTS', 'switch_funding_alerts'),
+  ]),
+}
+
 // Back
 const backKeyboard = {
   parse_mode: 'HTML',
@@ -69,5 +78,6 @@ module.exports = {
   removeOrders,
   closePositions,
   backKeyboard,
+  fundingMenu,
   chooseLeverage,
 }

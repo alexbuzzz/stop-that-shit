@@ -1,13 +1,18 @@
+require('dotenv').config()
+
 const cron = require('node-cron')
 
-require('dotenv').config()
+const JSONdb = require('simple-json-db')
+const db = new JSONdb('db.json')
+
 const {
   startKeyboard,
   removeOrders,
   closePositions,
   backKeyboard,
   chooseLeverage,
-} = require('./keyboards')
+  fundingMenu,
+} = require('./public/scripts/keyboards')
 
 const {
   getPos,
@@ -17,210 +22,167 @@ const {
   setLeverage,
   getBalances,
   getFundingRate,
-} = require('./binance')
+} = require('./public/scripts/binance')
 
-const { helpText } = require('./textTemplates')
+const { helpText } = require('./public/scripts/textTemplates')
 
 const { Telegraf } = require('telegraf')
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
-let delayTime
+// FUNDING TIMER
+cron.schedule('58 23,7,15 * * *', async () => {
+  if ((await getFundingRate()).counter > 0) {
+    if (db.get('alerts')) {
+      if (db.get('alerts') == 'on') {
+        const msg = await bot.telegram.sendMessage(
+          process.env.USER_ID,
+          '❗️ FUNDING IN 2 MINUTES'
+        )
+        setTimeout(() => {
+          bot.telegram.deleteMessage(process.env.USER_ID, msg.message_id)
+        }, 1000 * 10)
+      }
+    }
+  }
+})
 
 // START
-
 bot.command('start', async (ctx) => {
   if (ctx.message.chat.id == process.env.USER_ID) {
     try {
-      await ctx.replyWithPhoto({ source: './lazyscalp1000x1000.png' })
+      await ctx.replyWithPhoto({
+        source: './public/images/lazyscalp1000x1000.png',
+      })
       ctx.reply('Press button to do something:', startKeyboard)
     } catch (error) {
       console.log('start error' + error)
     }
-
-    // cron.schedule('* * * * *', async () => {
-    //   const msg = await ctx.reply(
-    //     'Hi there! 👋 \nGo chill and wait for a signal from me! 😎'
-    //   )
-    //   console.log(msg.message_id)
-    // })
   }
 })
 
 // CHECK ORDERS
-try {
-  bot.action('check_orders', async (ctx) => {
-    clearTimeout(delayTime)
-    const orders = await getOrd()
+bot.action('check_orders', async (ctx) => {
+  const orders = await getOrd()
 
-    if (orders.status === 'empty') {
-      ctx.editMessageText('No open ORDERS yet 👌', backKeyboard)
-    } else if (orders.status === 'error') {
-      ctx.editMessageText(orders.msg, backKeyboard)
-    } else {
-      ctx.editMessageText(`Orders:\n${orders.msg}`, removeOrders)
-    }
-  })
-} catch (error) {
-  console.log('check_orders error' + error)
-}
+  if (orders.status === 'empty') {
+    ctx.editMessageText('No open ORDERS yet 👌', backKeyboard)
+  } else if (orders.status === 'error') {
+    ctx.editMessageText(orders.msg, backKeyboard)
+  } else {
+    ctx.editMessageText(`Orders:\n${orders.msg}`, removeOrders)
+  }
+})
 
 // CHECK POSITIONS
-try {
-  bot.action('check_positions', async (ctx) => {
-    clearTimeout(delayTime)
-    const positions = await getPos()
+bot.action('check_positions', async (ctx) => {
+  const positions = await getPos()
 
-    if (positions.status === 'empty') {
-      ctx.editMessageText('No open POSITIONS yet 👌', backKeyboard)
-    } else if (positions.status === 'error') {
-      ctx.editMessageText(positions.msg, backKeyboard)
-    } else {
-      ctx.editMessageText(`Positions:\n${positions.msg}`, closePositions)
-    }
-  })
-} catch (error) {
-  console.log('check_positions error' + error)
-}
+  if (positions.status === 'empty') {
+    ctx.editMessageText('No open POSITIONS yet 👌', backKeyboard)
+  } else if (positions.status === 'error') {
+    ctx.editMessageText(positions.msg, backKeyboard)
+  } else {
+    ctx.editMessageText(`Positions:\n${positions.msg}`, closePositions)
+  }
+})
 
 // CANCEL ORDERS
-try {
-  bot.action('remove_orders', async (ctx) => {
-    const cancelStatus = await cancelOrd()
-    ctx.editMessageText(cancelStatus, backKeyboard)
-  })
-} catch (error) {
-  console.log('remove_orders error') + error
-}
+bot.action('remove_orders', async (ctx) => {
+  const cancelStatus = await cancelOrd()
+  ctx.editMessageText(cancelStatus, backKeyboard)
+})
 
 // CLOSE POSITIONS
-try {
-  bot.action('close_positions', async (ctx) => {
-    const closeStatus = await closePos()
-    ctx.editMessageText(closeStatus, backKeyboard)
-  })
-} catch (error) {
-  console.log('close_positions error' + error)
-}
+bot.action('close_positions', async (ctx) => {
+  const closeStatus = await closePos()
+  ctx.editMessageText(closeStatus, backKeyboard)
+})
 
 // CHOOSE LEVERAGE
-try {
-  bot.action('leverage', async (ctx) => {
-    ctx.editMessageText(
-      'Select leverage value to set in all futures:',
-      chooseLeverage
-    )
-  })
-} catch (error) {
-  console.log('leverage error' + error)
-}
+bot.action('leverage', async (ctx) => {
+  ctx.editMessageText(
+    'Select leverage value to set in all futures:',
+    chooseLeverage
+  )
+})
 
 // SET 1
-try {
-  bot.action('one', async (ctx) => {
-    const res = await setLeverage(1)
-    ctx.editMessageText(res, backKeyboard)
-  })
-} catch (error) {
-  console.log('one error' + error)
-}
+bot.action('one', async (ctx) => {
+  const res = await setLeverage(1)
+  ctx.editMessageText(res, backKeyboard)
+})
 
 // SET 2
-try {
-  bot.action('two', async (ctx) => {
-    const res = await setLeverage(2)
-    ctx.editMessageText(res, backKeyboard)
-  })
-} catch (error) {
-  console.log('two error' + error)
-}
+bot.action('two', async (ctx) => {
+  const res = await setLeverage(2)
+  ctx.editMessageText(res, backKeyboard)
+})
 
 // SET 5
-try {
-  bot.action('five', async (ctx) => {
-    const res = await setLeverage(5)
-    ctx.editMessageText(res, backKeyboard)
-  })
-} catch (error) {
-  console.log('five error' + error)
-}
+bot.action('five', async (ctx) => {
+  const res = await setLeverage(5)
+  ctx.editMessageText(res, backKeyboard)
+})
 
 // SET 8
-try {
-  bot.action('eight', async (ctx) => {
-    const res = await setLeverage(8)
-    ctx.editMessageText(res, backKeyboard)
-  })
-} catch (error) {
-  console.log('eight error' + error)
-}
+bot.action('eight', async (ctx) => {
+  const res = await setLeverage(8)
+  ctx.editMessageText(res, backKeyboard)
+})
 
 // SET 10
-try {
-  bot.action('ten', async (ctx) => {
-    const res = await setLeverage(10)
-    ctx.editMessageText(res, backKeyboard)
-  })
-} catch (error) {
-  console.log('ten error' + error)
-}
+bot.action('ten', async (ctx) => {
+  const res = await setLeverage(10)
+  ctx.editMessageText(res, backKeyboard)
+})
 
 // SET 20
-try {
-  bot.action('twenty', async (ctx) => {
-    const res = await setLeverage(20)
-    ctx.editMessageText(res, backKeyboard)
-  })
-} catch (error) {
-  console.log('twenty error' + error)
-}
+bot.action('twenty', async (ctx) => {
+  const res = await setLeverage(20)
+  ctx.editMessageText(res, backKeyboard)
+})
 
 // SET MAX
-try {
-  bot.action('max', async (ctx) => {
-    const res = await setLeverage('max')
-    ctx.editMessageText(res, backKeyboard)
-  })
-} catch (error) {
-  console.log('max error' + error)
-}
+bot.action('max', async (ctx) => {
+  const res = await setLeverage('max')
+  ctx.editMessageText(res, backKeyboard)
+})
 
 // BALANCES
-try {
-  bot.action('balances', async (ctx) => {
-    const balances = await getBalances()
-    ctx.editMessageText(balances, backKeyboard)
-  })
-} catch (error) {
-  console.log('max error' + error)
-}
+bot.action('balances', async (ctx) => {
+  const balances = await getBalances()
+  ctx.editMessageText(balances, backKeyboard)
+})
 
-// FUNDINGS
-try {
-  bot.action('fundings', async (ctx) => {
-    const fundings = await getFundingRate()
-    ctx.editMessageText(fundings, backKeyboard)
-  })
-} catch (error) {
-  console.log('back error' + error)
-}
+// FUNDING MENU
+bot.action('fundings', async (ctx) => {
+  const fundings = await getFundingRate()
+  ctx.editMessageText(fundings.msg, fundingMenu)
+})
 
 // HELP
-try {
-  bot.action('help', async (ctx) => {
-    ctx.editMessageText(helpText, backKeyboard)
-  })
-} catch (error) {
-  console.log('back error' + error)
-}
+bot.action('help', async (ctx) => {
+  ctx.editMessageText(helpText, backKeyboard)
+})
 
 // BACK
-try {
-  bot.action('back', (ctx) => {
-    ctx.editMessageText('Press button to do something:', startKeyboard)
-  })
-} catch (error) {
-  console.log('back error' + error)
-}
+bot.action('back', (ctx) => {
+  ctx.editMessageText('Press button to do something:', startKeyboard)
+})
+
+// SWITCH FUNDING ALERTS
+bot.action('switch_funding_alerts', async (ctx) => {
+  if (db.get('alerts') == 'on') {
+    db.set('alerts', 'off')
+    ctx.editMessageText('🔕 You turned OFF funding alerts', backKeyboard)
+  } else {
+    db.set('alerts', 'on')
+    ctx.editMessageText(
+      '🔔 You turned ON funding alerts.\n\nIf the funding of any futures is at least 1%, bot will notify you 2 minutes before funding.',
+      backKeyboard
+    )
+  }
+})
 
 bot.launch()
